@@ -9,6 +9,7 @@ from scipy import sparse
 import scipy as sp
 
 
+
 def get_hamiltonian(n, w, t, periodic=False):
     hamiltonian = np.zeros((n, n))
     #    hamiltonian.fill(0)
