@@ -41,9 +41,9 @@ def get_hamiltonian(n, w, t):
 #     return hamiltonian
 
 def find_min_max_eigenvals(hamiltonian):
-    eigen_val, eigen_vec = sp.sparse.linalg.eigsh(hamiltonian)
-    eigen_ma = np.max(eigen_val)
-    eigen_mi = np.min(eigen_val)
+    #eigen_val, eigen_vec = sp.sparse.linalg.eigsh(hamiltonian, k=1, which = 'LA')
+    eigen_ma = sp.sparse.linalg.eigsh(hamiltonian, k=1, which = 'LA')[0]
+    eigen_mi = sp.sparse.linalg.eigsh(hamiltonian, k=1, which = 'SA')[0]
     return eigen_mi, eigen_ma
 
 
@@ -60,7 +60,7 @@ def eigen_values(hamiltonian, n, EPSILON):  # rescaling hamiltonian
 
 def get_state(n, k):
     """ Returns a state with a particle in site `k`"""
-    vector_i = np.zeros(n**3)
+    vector_i = np.zeros(n ** 3)
     vector_i[k] = 1
     return vector_i
 
@@ -74,7 +74,7 @@ def create_alpha_0_and_alpha_1(n, rescaled_hamiltonian, k):
 
 def create_alpha_n(alpha_0, alpha_1, j, rescaled_hamiltonian):
     all_alphas = np.ndarray(shape=(j, len(alpha_0)))
-    all_alphas[0], all_alphas[1]= alpha_0, alpha_1
+    all_alphas[0], all_alphas[1] = alpha_0, alpha_1
     for i in range(2, j):
         all_alphas[i] = 2 * rescaled_hamiltonian @ all_alphas[i - 1] - all_alphas[i - 2]
     return all_alphas
@@ -112,19 +112,19 @@ def average_densities(n_runs, n, w, t, EPSILON, j):
             f, x = density_of_states(alpha_0, alpha_1, j, rescaled_hamiltonian)
             y += f
         print("site " + str(k) + " done")
-        average_density_final += y / (n_runs)
-    return average_density_final/10, x
+        average_density_final += y / n_runs
+    return average_density_final / 10, x
 
 
 def main():
-    n = 15  # size of matrix
+    n = 20  # size of matrix
     t = 1.0  # hopping
-    w = 1.5 * t  # potential energy
-    j = 70  # number of moments
-    EPSILON = 1.0  # Margin in Chebyshev expansion
-    n_runs = 40  # number of iterations
+    w = 0 * t  # potential energy
+    j = 30  # number of moments
+    EPSILON = 1  # Margin in Chebyshev expansion
+    n_runs = 1  # number of iterations
 
-    #hamiltonian = get_hamiltonian(n, w, t)  # avg_matrix(n, w, t, n_samples)
+    # hamiltonian = get_hamiltonian(n, w, t)  # avg_matrix(n, w, t, n_samples)
 
     # eigen_min, eigen_max = find_min_max_eigenvals(hamiltonian)
     # a = (eigen_max - eigen_min) / (2 - EPSILON)
@@ -152,8 +152,14 @@ def main():
     average_spectrum, x = average_densities(n_runs, n, w, t, EPSILON, j)
     np.savetxt('n' + str(n) + '_j' + str(j) + '_runs' + str(n_runs) + '.dat', np.c_[x, average_spectrum])
     plt.plot(x, average_spectrum)
+    data = np.genfromtxt('data_from_review.txt')
+    x = data[:, 0]
+    y = data[:, 1]
+
+    plt.plot(x, y)
     plt.show()
 
-
+import cProfile
 if __name__ == '__main__':
+    # cProfile.run('main()')
     main()

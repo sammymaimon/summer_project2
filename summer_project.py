@@ -9,7 +9,6 @@ from scipy import sparse
 import scipy as sp
 
 
-
 def get_hamiltonian(n, w, t, periodic=False):
     hamiltonian = np.zeros((n, n))
     #    hamiltonian.fill(0)
@@ -50,13 +49,13 @@ def calculate_moments(alpha_0, d, hamiltonian, alpha_1, num_moments):
     return mu
 
 def main():
-    n = 10000 # size of matrix
+    n = 1000  # size of matrix
     w = 0.0 # potential energy
     t = -1.0 # hopping
-
     j = 1000 # number of moments
+    EPSILON = 1 # Margin in Chebyshev expansion
 
-    EPSILON = 1.0 # Margin in Chebyshev expansion
+
     hamiltonian = get_hamiltonian(n, w, t) # avg_matrix(n, w, t, n_samples)
 
     eigen_min, eigen_max = find_min_max_eigenvals(hamiltonian)

@@ -27,7 +27,6 @@ def get_hamiltonian(n, w, t):
                 hamiltonian[i * n * n + j * n + k, i * n * n + j * n + kp1] = t
     return hamiltonian
 
-
 # def get_hamiltonian(n, w, t, periodic=False):
 #     hamiltonian = np.zeros((n, n))
 #     #    hamiltonian.fill(0)
