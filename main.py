@@ -1,9 +1,7 @@
-from numpy.polynomial.polyutils import as_series
 from numpy.polynomial import chebyshev
 from scipy.sparse.linalg import eigsh
 import numpy as np
 import random
-import math
 import matplotlib.pyplot as plt
 from scipy import sparse
 import scipy as sp
@@ -24,6 +22,9 @@ def get_hamiltonian(n, w, t):
                 hamiltonian[i * n * n + j * n + k, i * n * n + jp1 * n + k] = t
                 hamiltonian[i * n * n + j * n + kp1, i * n * n + j * n + k] = t
                 hamiltonian[i * n * n + j * n + k, i * n * n + j * n + kp1] = t
+    # plt.matshow(hamiltonian.todense())
+    # plt.show()
+    # exit()
     return hamiltonian
 
 
@@ -41,9 +42,10 @@ def get_hamiltonian(n, w, t):
 #     return hamiltonian
 
 def find_min_max_eigenvals(hamiltonian):
-    #eigen_val, eigen_vec = sp.sparse.linalg.eigsh(hamiltonian, k=1, which = 'LA')
-    eigen_ma = sp.sparse.linalg.eigsh(hamiltonian, k=1, which = 'LA')[0]
-    eigen_mi = sp.sparse.linalg.eigsh(hamiltonian, k=1, which = 'SA')[0]
+    # eigen_val, eigen_vec = sp.sparse.linalg.eigsh(hamiltonian, k=1, which = 'LA')
+    hamiltonian = sp.sparse.csr_matrix(hamiltonian)
+    eigen_ma = sp.sparse.linalg.eigsh(hamiltonian, k=1, which='LA')[0]
+    eigen_mi = sp.sparse.linalg.eigsh(hamiltonian, k=1, which='SA')[0]
     return eigen_mi, eigen_ma
 
 
@@ -53,10 +55,12 @@ def eigen_values(hamiltonian, n, EPSILON):  # rescaling hamiltonian
     b_sum = eigen_max + eigen_min
     a = a_diff / (2 - EPSILON)
     b = b_sum / 2
-    hamiltonian_b_diff = np.diff([hamiltonian, b * np.eye(n ** 3)])
-    rescaled_hamiltonian = sparse.csr_matrix(hamiltonian_b_diff[0]) / a
+    hamiltonian_b_diff = hamiltonian - b[0] * sp.sparse.eye(n ** 3)
+    rescaled_hamiltonian = sparse.csr_matrix(hamiltonian_b_diff) / a[0]
+    # hamiltonian_b_diff = np.diff([hamiltonian, b * np.eye(n ** 3)])
+    # rescaled_hamiltonian = hamiltonian_b_diff[0] / a
+    print(rescaled_hamiltonian.shape)
     return rescaled_hamiltonian
-
 
 def get_state(n, k):
     """ Returns a state with a particle in site `k`"""
@@ -64,13 +68,11 @@ def get_state(n, k):
     vector_i[k] = 1
     return vector_i
 
-
 def create_alpha_0_and_alpha_1(n, rescaled_hamiltonian, k):
     # creating all vecs-
     alpha_0 = get_state(n, k)
     alpha_1 = rescaled_hamiltonian @ alpha_0
     return alpha_1, alpha_0
-
 
 def create_alpha_n(alpha_0, alpha_1, j, rescaled_hamiltonian):
     all_alphas = np.ndarray(shape=(j, len(alpha_0)))
@@ -78,7 +80,6 @@ def create_alpha_n(alpha_0, alpha_1, j, rescaled_hamiltonian):
     for i in range(2, j):
         all_alphas[i] = 2 * rescaled_hamiltonian @ all_alphas[i - 1] - all_alphas[i - 2]
     return all_alphas
-
 
 def calculate_moments(alpha_0, alpha_1, rescaled_hamiltonian, j):
     alpha = create_alpha_n(alpha_0, alpha_1, j, rescaled_hamiltonian)
@@ -103,26 +104,27 @@ def average_densities(n_runs, n, w, t, EPSILON, j):
     # hamiltonian = get_hamiltonian(n, w, t)
     # rescaled_hamiltonian = eigen_values(hamiltonian, n, EPSILON)
     average_density_final = np.zeros(1000)
-    for k in l:
-        y = np.zeros(1000)
-        for i in range(n_runs):
-            hamiltonian = get_hamiltonian(n, w, t)
-            rescaled_hamiltonian = eigen_values(hamiltonian, n, EPSILON)
+    for i in range(n_runs):
+        hamiltonian = get_hamiltonian(n, w, t)
+        rescaled_hamiltonian = eigen_values(hamiltonian, n, EPSILON)
+        for k in l:
+            y = np.zeros(1000)
             alpha_1, alpha_0 = create_alpha_0_and_alpha_1(n, rescaled_hamiltonian, k)
             f, x = density_of_states(alpha_0, alpha_1, j, rescaled_hamiltonian)
             y += f
-        print("site " + str(k) + " done")
+            print(f"site {k} in run {i} done")
         average_density_final += y / n_runs
     return average_density_final / 10, x
 
 
 def main():
-    n = 20  # size of matrix
-    t = 1.0  # hopping
-    w = 0 * t  # potential energy
-    j = 30  # number of moments
+    # n = 25  # size of matrix
+    t = -1.0  # hopping
+    w = 3 * t  # potential energy
+    j = 1000  # number of moments
     EPSILON = 1  # Margin in Chebyshev expansion
-    n_runs = 1  # number of iterations
+    n_runs = 240  # number of iterations
+    for n in range(35, 51, 5):
 
     # hamiltonian = get_hamiltonian(n, w, t)  # avg_matrix(n, w, t, n_samples)
 
@@ -143,23 +145,21 @@ def main():
     # moment_sum = np.polynomial.chebyshev.chebval(x, c)
     # f = (2 / np.pi * np.sqrt(1 - x ** 2)) * moment_sum
 
-    #
     # g= f*a +b
     #
     # plt.plot(x, f)
     # plt.show()
 
-    average_spectrum, x = average_densities(n_runs, n, w, t, EPSILON, j)
-    np.savetxt('n' + str(n) + '_j' + str(j) + '_runs' + str(n_runs) + '.dat', np.c_[x, average_spectrum])
-    plt.plot(x, average_spectrum)
-    data = np.genfromtxt('data_from_review.txt')
-    x = data[:, 0]
-    y = data[:, 1]
+        average_spectrum, x = average_densities(n_runs, n, w, t, EPSILON, j)
+        np.savetxt('n' + str(n) + '_j' + str(j) + '_runs' + str(n_runs) + '.dat', np.c_[x, average_spectrum])
+        plt.plot(x, average_spectrum)
+        data = np.genfromtxt('data_from_review.txt')
+        x = data[:, 0]
+        y = data[:, 1]
 
-    plt.plot(x, y)
-    plt.show()
+        plt.plot(x, y)
+        plt.show()
 
-import cProfile
+
 if __name__ == '__main__':
-    # cProfile.run('main()')
     main()
