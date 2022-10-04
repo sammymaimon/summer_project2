@@ -124,7 +124,7 @@ def main():
     j = 1000  # number of moments
     EPSILON = 1  # Margin in Chebyshev expansion
     n_runs = 240  # number of iterations
-    for n in range(35, 51, 5):
+    for n in range(50, 51, 5):
 
     # hamiltonian = get_hamiltonian(n, w, t)  # avg_matrix(n, w, t, n_samples)
 
