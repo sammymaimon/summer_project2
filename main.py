@@ -60,7 +60,7 @@ def eigen_values(hamiltonian, n, EPSILON):  # rescaling hamiltonian
     # hamiltonian_b_diff = np.diff([hamiltonian, b * np.eye(n ** 3)])
     # rescaled_hamiltonian = hamiltonian_b_diff[0] / a
     print(rescaled_hamiltonian.shape)
-    return rescaled_hamiltonian
+    return rescaled_hamiltonian, a, b
 
 def get_state(n, k):
     """ Returns a state with a particle in site `k`"""
@@ -106,7 +106,7 @@ def average_densities(n_runs, n, w, t, EPSILON, j):
     average_density_final = np.zeros(1000)
     for i in range(n_runs):
         hamiltonian = get_hamiltonian(n, w, t)
-        rescaled_hamiltonian = eigen_values(hamiltonian, n, EPSILON)
+        rescaled_hamiltonian, a, b = eigen_values(hamiltonian, n, EPSILON)
         for k in l:
             y = np.zeros(1000)
             alpha_1, alpha_0 = create_alpha_0_and_alpha_1(n, rescaled_hamiltonian, k)
@@ -118,13 +118,13 @@ def average_densities(n_runs, n, w, t, EPSILON, j):
 
 
 def main():
-    # n = 25  # size of matrix
+    #n = 10  # size of matrix
     t = -1.0  # hopping
     w = 3 * t  # potential energy
     j = 1000  # number of moments
-    EPSILON = 1  # Margin in Chebyshev expansion
+    EPSILON = 0.85  # Margin in Chebyshev expansion
     n_runs = 240  # number of iterations
-    for n in range(50, 51, 5):
+    for n in range(10, 51, 5):
 
     # hamiltonian = get_hamiltonian(n, w, t)  # avg_matrix(n, w, t, n_samples)
 
@@ -151,14 +151,18 @@ def main():
     # plt.show()
 
         average_spectrum, x = average_densities(n_runs, n, w, t, EPSILON, j)
-        np.savetxt('n' + str(n) + '_j' + str(j) + '_runs' + str(n_runs) + '.dat', np.c_[x, average_spectrum])
-        plt.plot(x, average_spectrum)
-        data = np.genfromtxt('data_from_review.txt')
-        x = data[:, 0]
-        y = data[:, 1]
 
-        plt.plot(x, y)
-        plt.show()
+    # y1 = y*a +b
+    # average_spectrum1 = average_spectrum/a
+
+        np.savetxt('n' + str(n) + '_j' + str(j) + '_runs' + str(n_runs) + '_EPSILON' + str(EPSILON) +'.dat', np.c_[x, average_spectrum])
+    # plt.plot(x, average_spectrum)
+    # data = np.genfromtxt('data_from_review.txt')
+    # x = data[:, 0]
+    # y = data[:, 1]
+    #
+    # plt.plot(x, y)
+    # plt.show()
 
 
 if __name__ == '__main__':
